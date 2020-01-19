@@ -1,22 +1,26 @@
 const express = require('express')
 const app = express()
 const port = 3000
-const { connection } = require('./database')
+const graphqlHTTP = require('express-graphql')
+const { buildSchema } = require('graphql')
 
-connection.connect()
+const schema = buildSchema(`
+  type Query {
+    hello: String
+  }
+`)
 
-connection.query('SELECT * from `users`', (error, results, fields) => {
-  if (error) throw error
+const root = {
+  hello () {
+    return 'Hello there!'
+  }
+}
 
-  console.log(`result: ${JSON.stringify(results)}`)
-})
+app.use('/graphql', graphqlHTTP({
+  schema: schema,
+  rootValue: root,
+  graphiql: true
+}))
 
-connection.end()
-
-app.get('/', (req, res) => res.send('Express server is ready!'))
-
-app.get('/books/:bookId', (req, res) => {
-  res.json(req.params)
-})
-
-app.listen(port, () => console.log(`Server listening on port: ${port}`))
+app.listen(4000)
+console.log(`listening to http://localhost:4000/graphql`)
